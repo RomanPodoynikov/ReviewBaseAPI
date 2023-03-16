@@ -42,6 +42,3 @@ class User(AbstractUser):
         max_length=30,
         blank=True
     )
-    @property
-    def is_stuff(self):
-        return self.role == ADMIN

@@ -3,6 +3,6 @@ from django.core.exceptions import ValidationError
 def validate_username(value):
     if value == 'me':
         raise ValidationError(
-            (f'Имя пользователя не может быть {value}.'),
+            (f'Username "{value}" is not valid.'),
             params={'value': value},
         )
