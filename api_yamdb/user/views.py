@@ -71,10 +71,7 @@ class CreateTokenViewSet(mixins.CreateModelMixin,
         return Response(message, status=status.HTTP_200_OK)
 
 
-# class UsersViewSet((mixins.CreateModelMixin,
-#                     mixins.ListModelMixin,
-#                     mixins.RetrieveModelMixin,
-#                     viewsets.GenericViewSet):
+
 class UsersViewSet(viewsets.ModelViewSet):
     """
     Получить список всех пользователей.
@@ -83,47 +80,3 @@ class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     # serializer_class = UsersSerializer
     permission_classes = [IsAuthenticated]
-
-# class CreateUserView(CreateAPIView):
-#    queryset = User.objects.all() queryset = User.objects.all()
-#     serializer_class = UserSerializer
-#     permission_classes = [AllowAny]
-
-#     (self, request):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         self.perform_create(serializer)
-#         headers = self.get_success_headers(serializer.data)
-
-#         username = request.data.get('username')
-#         email = request.data.get('email')
-#         user = get_object_or_404(User, username=username)
-#         code = default_token_generator.make_token(user)
-
-#         send_mail(
-#             subject='Ваш код аутентификации',
-#             message='Сохраните код! Он понадобится вам для получения токена.\n'
-#                     f'confirmation_code:\n{code}\n'
-#                     f'username: {username}',
-#             from_email=settings.DEFAULT_FROM_EMAIL,
-#             recipient_list=[email],
-#             fail_silently=False,
-#         )
-
-#         return Response(serializer.data, status=status.HTTP_201_CREATED,
-#                         headers=headers)
-      
-      
-# @api_view(['POST'])
-# @permission_classes([AllowAny])
-# def get_token(request):
-#     email = request.data.get('email')
-#     user = get_object_or_404(User, email=email)
-#     code = request.data.get('confirmation_code')
-#     if default_token_generator.check_token(user, code):
-#         user.is_active = True
-#         user.save()
-#         return Response({"message": "Аккаунт активирован"}, status.HTTP_200_OK)
-
-#     return Response({"message": "неверный код подтверждения."},
-#                     status.HTTP_400_BAD_REQUEST)
