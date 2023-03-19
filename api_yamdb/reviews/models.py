@@ -1,4 +1,4 @@
-from django.db.models import (DO_NOTHING, CharField, ForeignKey,
+from django.db.models import (SET_NULL, CharField, ForeignKey,
                               ManyToManyField, Model,
                               PositiveSmallIntegerField, SlugField, TextField)
 
@@ -39,9 +39,10 @@ class Title(Model):
     genre = ManyToManyField(Genre, through='GenreTitle')
     category = ForeignKey(
         Category,
-        on_delete=DO_NOTHING,
+        on_delete=SET_NULL,
         verbose_name='Категория',
         related_name='titles',
+        null=True,
     )
 
     class Meta:
@@ -55,8 +56,8 @@ class Title(Model):
 
 class GenreTitle(Model):
     """Модель, связующая жанры с произведениями."""
-    genre = ForeignKey(Genre, on_delete=DO_NOTHING)
-    title = ForeignKey(Title, on_delete=DO_NOTHING)
+    genre = ForeignKey(Genre, on_delete=SET_NULL, null=True)
+    title = ForeignKey(Title, on_delete=SET_NULL, null=True)
 
     def __str__(self):
         return f'{self.genre} {self.title}'
