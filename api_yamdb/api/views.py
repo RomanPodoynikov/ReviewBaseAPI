@@ -21,7 +21,7 @@ class GenreViewSet(PostGetDeleteViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (IsAuthorOrReadOnly,)
-    filter_backends = (SearchFilter)
+    filter_backends = (SearchFilter,)
     search_fields = ('name',)
 
 
@@ -29,5 +29,5 @@ class CategoryViewSet(PostGetDeleteViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (IsAuthorOrReadOnly,)
-    filter_backends = (SearchFilter)
+    filter_backends = (SearchFilter,)
     search_fields = ('name',)
