@@ -2,8 +2,9 @@ from django.db.models import (SET_NULL, CharField, ForeignKey, ManyToManyField,
                               Model, PositiveSmallIntegerField, SlugField,
                               TextField, CASCADE, IntegerField, DateTimeField,
                               UniqueConstraint)
-from django.core.validators import MaxValueValidator, MinValueValidator
 
+from django.core.validators import MaxValueValidator, MinValueValidator
+         
 
 # Сделать импорт
 # from ==== import User
@@ -11,7 +12,65 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 # Create your models here.
 
 
-# разместить под классом Title
+class Category(Model):
+    """Модель с категориями произведений."""
+    name = CharField('Название категории', max_length=256)
+    slug = SlugField('Slug категории', unique=True, max_length=50)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+
+    def __str__(self):
+        return self.name
+
+
+class Genre(Model):
+    """Модель с жанрами произведений."""
+    name = CharField('Название жанра', max_length=256)
+    slug = SlugField('Slug жанра', unique=True, max_length=50)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
+
+    def __str__(self):
+        return self.name
+
+
+class Title(Model):
+    """Модель с произведениями."""
+    name = CharField('Название', max_length=256)
+    year = PositiveSmallIntegerField('Год выпуска')
+    description = TextField('Описание', blank=True, null=True)
+    genre = ManyToManyField(Genre, through='GenreTitle')
+    category = ForeignKey(
+        Category,
+        on_delete=SET_NULL,
+        verbose_name='Категория',
+        related_name='titles',
+    )
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Произведение'
+        verbose_name_plural = 'Произведения'
+
+    def __str__(self):
+        return self.name
+
+
+class GenreTitle(Model):
+    """Модель, связующая жанры с произведениями."""
+    genre = ForeignKey(Genre, on_delete=SET_NULL)
+    title = ForeignKey(Title, on_delete=SET_NULL)
+
+    def __str__(self):
+        return f'{self.genre} {self.title}'
+
+
 class Review(Model):
     """Класс Reviews используется для создания отзывов.
     Экземпляр данного класса есть запись в таблице Review базы данных.
@@ -76,3 +135,4 @@ class Comment(Model):
     class Meta:
         verbose_name = ('Комментарий к отзыву')
         verbose_name_plural = ('Комментарии к отзывам')
+

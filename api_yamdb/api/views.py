@@ -1,10 +1,42 @@
-from rest_framework.viewsets import ModelViewSet
-
-from reviews.models import Comment, Review   # Title
-from .serializers import CommentSerializer, ReviewSerializer
 from django.shortcuts import get_object_or_404, get_list_or_404
 
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
+from rest_framework.viewsets import ModelViewSet
+from reviews.models import Category, Comment, Genre, Review, Title
+
+from api.mixins import PostGetDeleteViewSet
+from api.permissions import IsAuthorOrReadOnly
+from api.serializers import (CategorySerializer, CommentSerializer,
+                             GenreSerializer, ReviewSerializer,
+                             TitleSerializer)
+
+
 # Create your views here.
+
+
+class TitleViewSet(ModelViewSet):
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
+    permission_classes = (IsAuthorOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('category', 'genre', 'name', 'year')
+
+
+class GenreViewSet(PostGetDeleteViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    permission_classes = (IsAuthorOrReadOnly,)
+    filter_backends = (SearchFilter)
+    search_fields = ('name',)
+
+
+class CategoryViewSet(PostGetDeleteViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = (IsAuthorOrReadOnly,)
+    filter_backends = (SearchFilter)
+    search_fields = ('name',)
 
 
 class ReviewViewSet(ModelViewSet):
@@ -57,5 +89,5 @@ class CommentViewSet(ModelViewSet):
         # title_id = self.kwargs.get('title_id')
         #  title = get_object_or_404(Title, id=title_id)
         # if title.reviews.filter(id__exact=review_id):
-        
+
         serializer.save(author=self.request.user, review=review_id)
