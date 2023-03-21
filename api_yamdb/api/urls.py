@@ -13,5 +13,5 @@ v1_router.register('categories', CategoryViewSet, basename='categories')
 
 
 urlpatterns = [
-    path('', include(v1_router.urls), name='api-root'),
+    path('v1/', include(v1_router.urls), name='api-root'),
 ]
