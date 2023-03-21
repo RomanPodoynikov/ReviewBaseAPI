@@ -9,7 +9,7 @@ from api.mixins import PostGetDeleteViewSet
 from api.permissions import IsAuthorOrReadOnly
 from api.serializers import (CategorySerializer, CommentSerializer,
                              GenreSerializer, ReviewSerializer,
-                             TitleSerializer)
+                             TitleSerializer, ReadTitleSerializer)
 
 
 # Create your views here.
@@ -18,16 +18,29 @@ from api.serializers import (CategorySerializer, CommentSerializer,
 class TitleViewSet(ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    permission_classes = (IsAuthorOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category', 'genre', 'name', 'year')
+    # filterset_class = TitleFilter
+    # pagination_class = TitlePagination
+    filterset_fields = ('name', 'year', 'category', 'genre',)
+
+    # def get_permissions(self):
+    #     if self.action == 'list' or self.action == 'retrieve':
+    #         return (AllowAny(),)
+    #     return (IsAdmin(),)
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return TitleSerializer
+        return ReadTitleSerializer
+
+
 
 
 class GenreViewSet(PostGetDeleteViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (IsAuthorOrReadOnly,)
-    filter_backends = (SearchFilter)
+    filter_backends = (SearchFilter,)
     search_fields = ('name',)
 
 
@@ -35,7 +48,7 @@ class CategoryViewSet(PostGetDeleteViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (IsAuthorOrReadOnly,)
-    filter_backends = (SearchFilter)
+    filter_backends = (SearchFilter,)
     search_fields = ('name',)
 
 
@@ -47,17 +60,16 @@ class ReviewViewSet(ModelViewSet):
 
     def get_queryset(self):
         """Метод для определения queryset (отзывы только 1 произведения.)"""
-        # использовать, когда будет модель Title,  удалить из импортов get_list_or_404
-        # title_id = self.kwargs.get('title_id')
-        # reviews_queryset = get_object_or_404(Title, id=title_id).reviews
-        # return reviews_queryset
         title_id = self.kwargs.get('title_id')
-        reviews_queryset = get_list_or_404(Review, title=title_id)
+        reviews_queryset = get_object_or_404(Title, id=title_id).reviews
         return reviews_queryset
 
     def perform_create(self, serializer):
         """Метод для добавления доп.инфо при создании нового комментария."""
-        # использовать, когда будет модель Title
+        title_id = self.kwargs.get('title_id')
+        title = get_object_or_404(Title, id=title_id)
+        serializer.save(author=5, title=title)
+        # использовать, когда будет модель User
         # title_id = self.kwargs.get('title_id')
         # title = get_object_or_404(Title, id=title_id)
         # serializer.save(author=self.request.user, title=title)
@@ -73,21 +85,18 @@ class CommentViewSet(ModelViewSet):
 
     def get_queryset(self):
         """Метод для определения queryset (комментарии только 1 отзыва.)"""
-
-        # title_id = self.kwargs.get('title_id')
-        # review_id = self.kwargs.get('review_id')
-        # comments_queryset = get_object_or_404(
-        #     Title, id=title_id).revievs.get(id=review_id).comments
-        review_id = self.kwargs.get('review_id')
-        comments_queryset = get_object_or_404(Review, id=review_id).comments
+        review_id, title_id = (self.kwargs.get('reviews_id'),
+                               self.kwargs.get('title_id'))
+        comments_queryset = get_object_or_404(
+            Review, id=review_id, title=title_id).comments
         return comments_queryset
 
     def perform_create(self, serializer):
         """Метод для добавления доп.инфо при создании нового комментария."""
-        review_id = self.kwargs.get('review_id')
-        # тестировать только после модели Titles
-        # title_id = self.kwargs.get('title_id')
-        #  title = get_object_or_404(Title, id=title_id)
-        # if title.reviews.filter(id__exact=review_id):
+        review_id, title_id = (self.kwargs.get('reviews_id'),
+                               self.kwargs.get('title_id'))
+        review = get_object_or_404(Review, id=review_id, title=title_id)
+        serializer.save(author=1, review=review)
+        # Использовать, когда будет модель User
+        # serializer.save(author=self.request.user, review=review)
 
-        serializer.save(author=self.request.user, review=review_id)

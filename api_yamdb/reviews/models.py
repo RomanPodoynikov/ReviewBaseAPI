@@ -51,6 +51,7 @@ class Title(Model):
         on_delete=SET_NULL,
         verbose_name='Категория',
         related_name='titles',
+        null=True,
     )
 
     class Meta:
@@ -64,8 +65,8 @@ class Title(Model):
 
 class GenreTitle(Model):
     """Модель, связующая жанры с произведениями."""
-    genre = ForeignKey(Genre, on_delete=SET_NULL)
-    title = ForeignKey(Title, on_delete=SET_NULL)
+    genre = ForeignKey(Genre, on_delete=SET_NULL, null=True)
+    title = ForeignKey(Title, on_delete=SET_NULL, null=True)
 
     def __str__(self):
         return f'{self.genre} {self.title}'
@@ -75,13 +76,13 @@ class Review(Model):
     """Класс Reviews используется для создания отзывов.
     Экземпляр данного класса есть запись в таблице Review базы данных.
     """
-    # title = ForeignKey(
-    #     Title,
-    #     on_delete=CASCADE,
-    #     verbose_name='Произведение',
-    #     related_name='reviews'
-    # )
-    title = IntegerField(default=1)   # temp.
+    title = ForeignKey(
+        Title,
+        on_delete=CASCADE,
+        verbose_name='Произведение',
+        related_name='reviews'
+    )
+    # title = IntegerField(default=1)   # temp.
     text = TextField('Текст отзыва')
     # author = ForeignKey(
     #     User,
@@ -111,13 +112,13 @@ class Comment(Model):
     """Класс Comment используется для создания комментариев к отзывам.
     Экземпляр данного класса есть запись в таблице Comment базы данных.
     """
-    # review = ForeignKey(
-    #     Review,
-    #     on_delete=CASCADE,
-    #     verbose_name='Отзыв',
-    #     related_name='comments'
-    # )
-    review = IntegerField(default=1)   # temp.
+    review = ForeignKey(
+        Review,
+        on_delete=CASCADE,
+        verbose_name='Отзыв',
+        related_name='comments'
+    )
+    # review = IntegerField(default=1)   # temp.
     text = TextField()
     # author = ForeignKey(
     #     User,
