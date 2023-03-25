@@ -4,10 +4,14 @@ from django.db.models import (SET_NULL, CharField, ForeignKey, ManyToManyField,
                               UniqueConstraint)
 
 from django.core.validators import MaxValueValidator, MinValueValidator
-         
 
-# Сделать импорт
-# from ==== import User
+# 2 это
+# from django.contrib.auth import get_user_model
+# User = get_user_model()
+# на это
+from user.models import User
+# 2
+
 
 # Create your models here.
 
@@ -82,15 +86,14 @@ class Review(Model):
         verbose_name='Произведение',
         related_name='reviews'
     )
-    # title = IntegerField(default=1)   # temp.
     text = TextField('Текст отзыва')
-    # author = ForeignKey(
-    #     User,
-    #     on_delete=CASCADE,
-    #     verbose_name='Автор',
-    #     related_name='reviews'
-    # )
-    author = IntegerField(default=1)   # temp.
+    author = ForeignKey(
+        User,
+        on_delete=CASCADE,
+        verbose_name='Автор',
+        related_name='reviews'
+    )
+    # author = IntegerField(default=1)   # temp.
     score = IntegerField('Оценка', validators=[MinValueValidator(1),
                                                MaxValueValidator(10)])
     pub_date = DateTimeField('Дата публикации', auto_now_add=True)
@@ -118,15 +121,14 @@ class Comment(Model):
         verbose_name='Отзыв',
         related_name='comments'
     )
-    # review = IntegerField(default=1)   # temp.
     text = TextField()
-    # author = ForeignKey(
-    #     User,
-    #     on_delete=CASCADE,
-    #     verbose_name='Автор',
-    #     related_name='comments'
-    # )
-    author = IntegerField(default=1)   # temp.
+    author = ForeignKey(
+        User,
+        on_delete=CASCADE,
+        verbose_name='Автор',
+        related_name='comments'
+    )
+    # author = IntegerField(default=1)   # temp.
     pub_date = DateTimeField('Дата публикации', auto_now_add=True)
 
     def __str__(self):
@@ -136,4 +138,3 @@ class Comment(Model):
     class Meta:
         verbose_name = ('Комментарий к отзыву')
         verbose_name_plural = ('Комментарии к отзывам')
-

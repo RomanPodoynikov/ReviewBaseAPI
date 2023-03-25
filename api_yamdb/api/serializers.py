@@ -1,20 +1,26 @@
+
 from rest_framework.serializers import (ModelSerializer,
                                         SlugRelatedField,
-                                        SerializerMethodField)
+                                        SerializerMethodField,
+                                        CharField,
+                                        ValidationError,
+                                        PrimaryKeyRelatedField,
+                                        CurrentUserDefault)
 from reviews.models import Category, Comment, Genre, Review, Title
-# from rest_framework.validators import UniqueTogetherValidator
+from rest_framework.validators import UniqueTogetherValidator
 from django.shortcuts import get_object_or_404
 from django.db.models import Avg
 
+
 class GenreSerializer(ModelSerializer):
     class Meta:
-        fields = '__all__'
+        fields = ('name', 'slug',)
         model = Genre
 
 
 class CategorySerializer(ModelSerializer):
     class Meta:
-        fields = '__all__'
+        fields = ('name', 'slug',)
         model = Category
 
 
@@ -46,53 +52,41 @@ class ReadTitleSerializer(ModelSerializer):
 
 
 class ReviewSerializer(ModelSerializer):
-    # когда будет модель User, добавить ее и использовать это поле
-    # author = SlugRelatedField(
-    #     slug_field='username', read_only=True,
-    #     default=serializers.CurrentUserDefault())
+    author = SlugRelatedField(
+        slug_field='username', read_only=True,
+        default=CurrentUserDefault())
+    title = PrimaryKeyRelatedField(
+        queryset=Title.objects.all(), write_only=True)
+
+    def to_internal_value(self, data):
+        data['title'] = self.context['view'].get_title().id
+        return super().to_internal_value(data)
 
     class Meta:
         model = Review
-        fields = ('id', 'text', 'author', 'score', 'pub_date')
+        fields = '__all__'
 
-    # проверить score, на уровне модели проверяется
-    # def validate_rating(self, value):
-    #     if value < 1 or value > 10:
-    #         raise serializers.ValidationError('Rating has to be between 1 and 10.')
-    #     return value
-
-        # Невозможность написать более одного отзыва на произведение
-
-        # протестировать, когда будет User. Описать title
-        # validators = [
-        #     UniqueTogetherValidator(
-        #         queryset=Review.objects.all(),
-        #         fields=('author', 'title'),
-        #         message='Вы уже оставляли отзыв на это произведение.',
-        #     )
-        # ]
+    # Невозможность написать более одного отзыва на произведение
+    validators = [
+        UniqueTogetherValidator(
+            queryset=Review.objects.all(),
+            fields=('author', 'title'),
+            message='Вы уже оставляли отзыв на это произведение.',
+        )
+    ]
 
 
 class CommentSerializer(ModelSerializer):
-    # когда будет модель User, добавить ее и использовать это поле
-    # author = SlugRelatedField(
-    #     slug_field='username', read_only=True)
+    author = SlugRelatedField(
+        slug_field='username', read_only=True,
+        default=CurrentUserDefault())
+    review = PrimaryKeyRelatedField(
+        queryset=Review.objects.all(), write_only=True)
+
+    def to_internal_value(self, data):
+        data['review'] = self.context['view'].get_review().id
+        return super().to_internal_value(data)
+
     class Meta:
         model = Comment
-        fields = ('id', 'text', 'author', 'pub_date')
-
-
-# Дописать в сериалайзер для Title
-# импорт from rest_framework.serializers import SerializerMethodField
-# from django.shortcuts import get_object_or_404
-# from django.db.models import Avg
-#     "rating" - должно быть среди filds
-#     rating = SerializerMethodField()
-#     def get_rating(self, obj):
-#         ob = get_object_or_404(Title, pk=obj.id)
-#         rating = ob.reviews.aggregate(Avg("score"))
-#         return rating
-
-# или to_representation()
-
-
+        fields = '__all__'
