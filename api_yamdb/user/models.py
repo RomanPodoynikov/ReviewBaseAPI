@@ -19,8 +19,8 @@ class User(AbstractUser):
                                             MyReqularValidator, ])
     email = models.EmailField(max_length=254, blank=False, unique=True,
                               null=False)
-    bio = models.TextField(blank=True)
     role = models.CharField(max_length=10, choices=ROLE_EXIST, default=USER)
+    bio = models.TextField(blank=True)
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
     confirmation_code = models.CharField(max_length=255, null=True,

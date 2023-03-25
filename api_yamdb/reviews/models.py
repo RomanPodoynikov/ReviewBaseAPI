@@ -1,6 +1,10 @@
-from django.db.models import (SET_NULL, CharField, ForeignKey,
-                              ManyToManyField, Model,
-                              PositiveSmallIntegerField, SlugField, TextField)
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db.models import (CASCADE, SET_NULL, CharField, DateTimeField,
+                              ForeignKey, IntegerField, ManyToManyField, Model,
+                              PositiveSmallIntegerField, SlugField, TextField,
+                              UniqueConstraint)
+
+from user.models import User
 
 
 class Category(Model):
@@ -35,8 +39,6 @@ class Title(Model):
     """Модель с произведениями."""
     name = CharField('Название', max_length=256)
     year = PositiveSmallIntegerField('Год выпуска')
-    description = TextField('Описание', blank=True, null=True)
-    genre = ManyToManyField(Genre, through='GenreTitle')
     category = ForeignKey(
         Category,
         on_delete=SET_NULL,
@@ -44,6 +46,8 @@ class Title(Model):
         related_name='titles',
         null=True,
     )
+    description = TextField('Описание', blank=True, null=True)
+    genre = ManyToManyField(Genre, through='GenreTitle')
 
     class Meta:
         ordering = ['name']
@@ -56,8 +60,70 @@ class Title(Model):
 
 class GenreTitle(Model):
     """Модель, связующая жанры с произведениями."""
-    genre = ForeignKey(Genre, on_delete=SET_NULL, null=True)
     title = ForeignKey(Title, on_delete=SET_NULL, null=True)
+    genre = ForeignKey(Genre, on_delete=SET_NULL, null=True)
 
     def __str__(self):
         return f'{self.genre} {self.title}'
+
+
+class Review(Model):
+    """Класс Reviews используется для создания отзывов.
+    Экземпляр данного класса есть запись в таблице Review базы данных.
+    """
+    title = ForeignKey(
+        Title,
+        on_delete=CASCADE,
+        verbose_name='Произведение',
+        related_name='reviews'
+    )
+    text = TextField('Текст отзыва')
+    author = ForeignKey(
+        User,
+        on_delete=CASCADE,
+        verbose_name='Автор',
+        related_name='reviews'
+    )
+    score = IntegerField('Оценка', validators=[MinValueValidator(1),
+                                               MaxValueValidator(10)])
+    pub_date = DateTimeField('Дата публикации', auto_now_add=True)
+
+    def __str__(self):
+        """Метод строкового представления объекта."""
+        return self.text
+
+    class Meta:
+        verbose_name = ('Отзыв')
+        verbose_name_plural = ('Отзывы')
+        constraints = (
+            UniqueConstraint(
+                fields=['author', 'title'], name='unique_author_title'),
+        )
+
+
+class Comment(Model):
+    """Класс Comment используется для создания комментариев к отзывам.
+    Экземпляр данного класса есть запись в таблице Comment базы данных.
+    """
+    review = ForeignKey(
+        Review,
+        on_delete=CASCADE,
+        verbose_name='Отзыв',
+        related_name='comments'
+    )
+    text = TextField()
+    author = ForeignKey(
+        User,
+        on_delete=CASCADE,
+        verbose_name='Автор',
+        related_name='comments'
+    )
+    pub_date = DateTimeField('Дата публикации', auto_now_add=True)
+
+    def __str__(self):
+        """Метод строкового представления объекта."""
+        return self.text
+
+    class Meta:
+        verbose_name = ('Комментарий к отзыву')
+        verbose_name_plural = ('Комментарии к отзывам')
