@@ -12,18 +12,16 @@ class IsOwnerOrModeratorOrReadOnly(BasePermission):
         """Проверка прав п-ля на возможность действий на сайте.
         Для любого пользователя доступны только безопасные методы .
         """
-        return bool(request.method in SAFE_METHODS
-                    or request.user and (
-                        request.user.is_authenticated or request.user.is_staff
-                    ))
+        return (request.user in SAFE_METHODS
+                or request.user.is_authenticated)
 
     def has_object_permission(self, request, view, obj):
         """Проверка прав п-ля на возможность действий с объектом."""
-        if obj.author != request.user or not (
-            request.user or request.user.is_staff
-        ):
-            return request.method in SAFE_METHODS
-        return True
+        return (
+            request.user == obj.author
+            or request.user.is_moderator
+            or request.user.is_admin
+        )
 
 
 class Admin_Only(BasePermission):

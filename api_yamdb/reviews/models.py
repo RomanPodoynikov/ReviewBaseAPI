@@ -1,19 +1,10 @@
-from django.db.models import (SET_NULL, CharField, ForeignKey, ManyToManyField,
-                              Model, PositiveSmallIntegerField, SlugField,
-                              TextField, CASCADE, IntegerField, DateTimeField,
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db.models import (CASCADE, SET_NULL, CharField, DateTimeField,
+                              ForeignKey, IntegerField, ManyToManyField, Model,
+                              PositiveSmallIntegerField, SlugField, TextField,
                               UniqueConstraint)
 
-from django.core.validators import MaxValueValidator, MinValueValidator
-
-# 2 это
-# from django.contrib.auth import get_user_model
-# User = get_user_model()
-# на это
 from user.models import User
-# 2
-
-
-# Create your models here.
 
 
 class Category(Model):
@@ -48,8 +39,6 @@ class Title(Model):
     """Модель с произведениями."""
     name = CharField('Название', max_length=256)
     year = PositiveSmallIntegerField('Год выпуска')
-    description = TextField('Описание', blank=True, null=True)
-    genre = ManyToManyField(Genre, through='GenreTitle')
     category = ForeignKey(
         Category,
         on_delete=SET_NULL,
@@ -57,6 +46,8 @@ class Title(Model):
         related_name='titles',
         null=True,
     )
+    description = TextField('Описание', blank=True, null=True)
+    genre = ManyToManyField(Genre, through='GenreTitle')
 
     class Meta:
         ordering = ['name']
@@ -69,8 +60,8 @@ class Title(Model):
 
 class GenreTitle(Model):
     """Модель, связующая жанры с произведениями."""
-    genre = ForeignKey(Genre, on_delete=SET_NULL, null=True)
     title = ForeignKey(Title, on_delete=SET_NULL, null=True)
+    genre = ForeignKey(Genre, on_delete=SET_NULL, null=True)
 
     def __str__(self):
         return f'{self.genre} {self.title}'
@@ -93,7 +84,6 @@ class Review(Model):
         verbose_name='Автор',
         related_name='reviews'
     )
-    # author = IntegerField(default=1)   # temp.
     score = IntegerField('Оценка', validators=[MinValueValidator(1),
                                                MaxValueValidator(10)])
     pub_date = DateTimeField('Дата публикации', auto_now_add=True)
@@ -128,7 +118,6 @@ class Comment(Model):
         verbose_name='Автор',
         related_name='comments'
     )
-    # author = IntegerField(default=1)   # temp.
     pub_date = DateTimeField('Дата публикации', auto_now_add=True)
 
     def __str__(self):

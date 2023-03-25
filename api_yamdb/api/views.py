@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-from reviews.models import Category, Comment, Genre, Review, Title
+from reviews.models import Category, Genre, Review, Title
 from user.models import User
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -21,7 +21,7 @@ from api.filters import TitleFilter
 from api.mixins import PostGetDeleteViewSet
 from api.permissions import IsAdmin, IsOwnerOrModeratorOrReadOnly, Admin_Only
 
-from api.serializers import (CategorySerializer, CommentSerializer, 
+from api.serializers import (CategorySerializer, CommentSerializer,
                              ChangeMeForAuthUserSerializer,
                              CreateUserSerializer, GenreSerializer,
                              GetTokenSerializer, ReadTitleSerializer,
@@ -121,7 +121,6 @@ class TitleViewSet(ModelViewSet):
     filterset_class = TitleFilter
     pagination_class = Pagination
     filterset_fields = ('name', 'year', 'category', 'genre',)
-    # permission_classes = (AllowAny, )
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'retrieve':
@@ -165,15 +164,11 @@ class CategoryViewSet(PostGetDeleteViewSet):
 class ReviewViewSet(ModelViewSet):
     """ViewSet для просмотра, создания и редактирования отзывов."""
     serializer_class = ReviewSerializer
-    # permission_classes = (AllowAny, )
-    permission_classes = (IsOwnerOrModeratorOrReadOnly,)
 
     def get_queryset(self):
         """Метод для определения queryset (отзывы только 1 произведения.)"""
         title_id = self.kwargs.get('title_id')
         reviews_queryset = get_object_or_404(Title, id=title_id).reviews
-        # print(get_object_or_404(Title, id=title_id).reviews.all())
-        # print(self.request.user)
         return reviews_queryset.all()
 
     def perform_create(self, serializer):
@@ -182,17 +177,18 @@ class ReviewViewSet(ModelViewSet):
         title = get_object_or_404(Title, id=title_id)
         serializer.save(author=self.request.user, title=title)
 
-    def get_title(self, key='title_id'):
-        return get_object_or_404(Title, id=self.kwargs.get(key))
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return (AllowAny(),)
+        return (IsOwnerOrModeratorOrReadOnly(),)
 
 
 class CommentViewSet(ModelViewSet):
-    """ViewSet для просмотра, создания и редактирования
+    """
+    ViewSet для просмотра, создания и редактирования
     комментариев к отзывам.
     """
     serializer_class = CommentSerializer
-    # permission_classes = (AllowAny, )
-    permission_classes = (IsOwnerOrModeratorOrReadOnly,)
 
     def get_queryset(self):
         """Метод для определения queryset (комментарии только 1 отзыва.)"""
@@ -209,5 +205,7 @@ class CommentViewSet(ModelViewSet):
         review = get_object_or_404(Review, id=review_id, title=title_id)
         serializer.save(author=self.request.user, review=review)
 
-    def get_review(self, key='reviews_id'):
-        return get_object_or_404(Review, id=self.kwargs.get(key))
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return (AllowAny(),)
+        return (IsOwnerOrModeratorOrReadOnly(),)

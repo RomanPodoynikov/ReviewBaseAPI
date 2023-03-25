@@ -1,17 +1,15 @@
-from rest_framework.serializers import (ModelSerializer,
-                                        SlugRelatedField,
+import re
+
+from django.db.models import Avg
+from django.shortcuts import get_object_or_404
+from rest_framework.serializers import (CharField, CurrentUserDefault,
+                                        EmailField, ModelSerializer,
+                                        Serializer,
                                         SerializerMethodField,
-                                        CharField,
-                                        ValidationError,
-                                        PrimaryKeyRelatedField,
-                                        CurrentUserDefault, EmailField,
-                                        Serializer, )
+                                        SlugRelatedField, ValidationError)
+
 from reviews.models import Category, Comment, Genre, Review, Title
 from user.models import User
-import re
-from rest_framework.validators import UniqueTogetherValidator
-from django.shortcuts import get_object_or_404
-from django.db.models import Avg
 
 
 class CreateUserSerializer(Serializer):
@@ -92,8 +90,8 @@ class ReadTitleSerializer(ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ("id", "name", "year", "rating", "description",
-                  "genre", "category")
+        fields = ('id', 'name', 'year', 'rating', 'description',
+                  'genre', 'category')
 
     def get_rating(self, obj):
         ob = get_object_or_404(Title, pk=obj.id)
@@ -102,41 +100,30 @@ class ReadTitleSerializer(ModelSerializer):
 
 
 class ReviewSerializer(ModelSerializer):
-    author = SlugRelatedField(
-        slug_field='username', read_only=True,
-        default=CurrentUserDefault())
-    title = PrimaryKeyRelatedField(
-        queryset=Title.objects.all(), write_only=True)
+    author = SlugRelatedField(slug_field='username', read_only=True,
+                              default=CurrentUserDefault())
+    title = SlugRelatedField(slug_field='name', read_only=True)
 
-    def to_internal_value(self, data):
-        data['title'] = self.context['view'].get_title().id
-        return super().to_internal_value(data)
+    def validate(self, data):
+        if self.context.get('request').method == 'POST':
+            author = self.context.get('request').user
+            title = self.context.get('view').kwargs.get('title_id')
+            if Review.objects.filter(title=title, author=author).exists():
+                raise ValidationError(
+                    'Вы уже оставляли отзыв на это произведение.',
+                )
+        return data
 
     class Meta:
         model = Review
         fields = '__all__'
-
-    # Невозможность написать более одного отзыва на произведение
-    validators = [
-        UniqueTogetherValidator(
-            queryset=Review.objects.all(),
-            fields=('author', 'title'),
-            message='Вы уже оставляли отзыв на это произведение.',
-        )
-    ]
 
 
 class CommentSerializer(ModelSerializer):
     author = SlugRelatedField(
         slug_field='username', read_only=True,
         default=CurrentUserDefault())
-    review = PrimaryKeyRelatedField(
-        queryset=Review.objects.all(), write_only=True)
-
-    def to_internal_value(self, data):
-        data['review'] = self.context['view'].get_review().id
-        return super().to_internal_value(data)
 
     class Meta:
         model = Comment
-        fields = '__all__'
+        exclude = ('review',)
