@@ -1,7 +1,7 @@
-from rest_framework.permissions import SAFE_METHODS, BasePermission
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
-class IsOwnerOrModeratorOrReadOnly(BasePermission):
+class IsOwnerOrPrivilegeduserOrReadOnly(BasePermission):
     """Просмотр контента - для всех, действия - для автора/персонала."""
     def has_permission(self, request, view):
         """
@@ -13,9 +13,10 @@ class IsOwnerOrModeratorOrReadOnly(BasePermission):
     def has_object_permission(self, request, view, obj):
         """Проверка прав п-ля на возможность действий с объектом."""
         return (
-            request.user == obj.author
+            request.method in SAFE_METHODS
             or request.user.is_moderator
             or request.user.is_admin
+            or request.user == obj.author
         )
 
 

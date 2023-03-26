@@ -13,9 +13,9 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import AccessToken
-
+from django.db.models import Avg, F
 from api.filters import TitleFilter
-from api.permissions import (Admin_Only, IsOwnerOrModeratorOrReadOnly,
+from api.permissions import (Admin_Only, IsOwnerOrPrivilegeduserOrReadOnly,
                              TitlePermission)
 from api.serializers import (CategorySerializer, ChangeMeForAuthUserSerializer,
                              CommentSerializer, CreateUserSerializer,
@@ -139,6 +139,9 @@ class TitleViewSet(ModelViewSet):
     pagination_class = PageNumberPagination
     filterset_fields = ('name', 'year', 'category', 'genre',)
 
+    def get_queryset(self):
+        return Title.objects.annotate(rating=Avg(F("reviews__score")))
+
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return PostPatchDeleteTitleSerializer
@@ -166,6 +169,8 @@ class CategoryViewSet(PostGetDeleteViewSet):
 class ReviewViewSet(ModelViewSet):
     """ViewSet для просмотра, создания и редактирования отзывов."""
     serializer_class = ReviewSerializer
+    http_method_names = ('get', 'post', 'patch', 'delete')
+    permission_classes = (IsOwnerOrPrivilegeduserOrReadOnly,)
 
     def get_queryset(self):
         """Метод для определения queryset (отзывы только 1 произведения)."""
@@ -179,11 +184,6 @@ class ReviewViewSet(ModelViewSet):
         title = get_object_or_404(Title, id=title_id)
         serializer.save(author=self.request.user, title=title)
 
-    def get_permissions(self):
-        if self.action == 'list' or self.action == 'retrieve':
-            return (AllowAny(),)
-        return (IsOwnerOrModeratorOrReadOnly(),)
-
 
 class CommentViewSet(ModelViewSet):
     """
@@ -191,30 +191,27 @@ class CommentViewSet(ModelViewSet):
     комментариев к отзывам.
     """
     serializer_class = CommentSerializer
+    http_method_names = ('get', 'post', 'patch', 'delete')
+    permission_classes = (IsOwnerOrPrivilegeduserOrReadOnly,)
+
+    def get_review(self):
+        """Метод для получения ревью."""
+        return self.kwargs.get('reviews_id')
+
+    def get_title(self):
+        """Метод для получения произведения."""
+        return self.kwargs.get('title_id')
 
     def get_queryset(self):
         """Метод для определения queryset (комментарии только 1 отзыва.)"""
-        review_id, title_id = (
-            self.kwargs.get('reviews_id'),
-            self.kwargs.get('title_id'),
-        )
         comments_queryset = get_object_or_404(
-            Review,
-            id=review_id,
-            title=title_id,
+            Review, id=self.get_review(), title=self.get_title()
         ).comments
         return comments_queryset.all()
 
     def perform_create(self, serializer):
         """Метод для добавления доп.инфо при создании нового комментария."""
-        review_id, title_id = (
-            self.kwargs.get('reviews_id'),
-            self.kwargs.get('title_id'),
+        review = get_object_or_404(
+            Review, id=self.get_review(), title=self.get_title()
         )
-        review = get_object_or_404(Review, id=review_id, title=title_id)
         serializer.save(author=self.request.user, review=review)
-
-    def get_permissions(self):
-        if self.action == 'list' or self.action == 'retrieve':
-            return (AllowAny(),)
-        return (IsOwnerOrModeratorOrReadOnly(),)
