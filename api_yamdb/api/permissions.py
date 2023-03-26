@@ -13,7 +13,7 @@ class IsOwnerOrPrivilegeduserOrReadOnly(BasePermission):
         Проверка прав п-ля на возможность действий на сайте.
         Для любого пользователя доступны только безопасные методы.
         """
-        return request.user in SAFE_METHODS or request.user.is_authenticated
+        return request.method in SAFE_METHODS or request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
         """Проверка прав п-ля на возможность действий с объектом."""

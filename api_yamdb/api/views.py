@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.db import IntegrityError
 from django.db.models import Avg, F
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -15,23 +14,13 @@ from rest_framework.status import (HTTP_200_OK, HTTP_400_BAD_REQUEST,
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import AccessToken
-from reviews.models import Category, Genre, Review, Title
-from user.models import User
 
 from api.filters import TitleFilter
-from api.mixins import PostGetDeleteViewSet
-from api.pagination import Pagination
-from api.permissions import IsAdmin, IsOwnerOrModeratorOrReadOnly
+from api.permissions import (IsAdmin, IsOwnerOrPrivilegeduserOrReadOnly,
+                             TitlePermission)
 from api.serializers import (CategorySerializer, CommentSerializer,
                              CreateUserSerializer, GenreSerializer,
                              GetTokenSerializer, MeSerializer,
-                             ReadTitleSerializer, ReviewSerializer,
-                             TitleSerializer, UsersSerializer)
-from api.permissions import (Admin_Only, IsOwnerOrPrivilegeduserOrReadOnly,
-                             TitlePermission)
-from api.serializers import (CategorySerializer, ChangeMeForAuthUserSerializer,
-                             CommentSerializer, CreateUserSerializer,
-                             GenreSerializer, GetTokenSerializer,
                              PostPatchDeleteTitleSerializer,
                              ReadTitleSerializer, ReviewSerializer,
                              UsersSerializer)
@@ -53,10 +42,14 @@ class CreateUserView(APIView):
             email=email
         ):
             if not User.objects.filter(username=username, email=email):
-                return Response('Login или Email уже занят',
-                                status=HTTP_400_BAD_REQUEST)
-        user, create = User.objects.get_or_create(username=username,
-                                                  email=email)
+                return Response(
+                    'Login или Email уже занят',
+                    status=HTTP_400_BAD_REQUEST,
+                )
+        user, create = User.objects.get_or_create(
+            username=username,
+            email=email,
+        )
         user.save()
         send_mail(
             subject='Код подтверждения регистрации',
@@ -88,14 +81,15 @@ class CreateTokenView(APIView):
             if serializer.is_valid():
                 username = serializer.validated_data.get('username')
                 confirmation_code = serializer.validated_data.get(
-                    'confirmation_code'
+                    'confirmation_code',
                 )
                 user = User.objects.get(username=username)
                 if not default_token_generator.check_token(
-                    user, confirmation_code
+                    user,
+                    confirmation_code,
                 ):
                     message = (
-                        'Отсутствует обязательное поле или оно некорректно'
+                        'Отсутствует обязательное поле или оно некорректно',
                     )
                     return Response(message, status=HTTP_400_BAD_REQUEST)
                 user.save()
@@ -121,12 +115,13 @@ class UsersViewSet(ModelViewSet):
         url_path='me',
     )
     def user_get_or_patch_me(self, request):
-
         if request.method == 'GET':
             serializer = UsersSerializer(request.user)
             return Response(serializer.data)
         serializer = MeSerializer(
-            request.user, data=request.data, partial=True
+            request.user,
+            data=request.data,
+            partial=True,
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -208,13 +203,17 @@ class CommentViewSet(ModelViewSet):
     def get_queryset(self):
         """Метод для определения queryset (комментарии только 1 отзыва.)"""
         comments_queryset = get_object_or_404(
-            Review, id=self.get_review(), title=self.get_title()
+            Review,
+            id=self.get_review(),
+            title=self.get_title(),
         ).comments
         return comments_queryset.all()
 
     def perform_create(self, serializer):
         """Метод для добавления доп.инфо при создании нового комментария."""
         review = get_object_or_404(
-            Review, id=self.get_review(), title=self.get_title()
+            Review,
+            id=self.get_review(),
+            title=self.get_title(),
         )
         serializer.save(author=self.request.user, review=review)
