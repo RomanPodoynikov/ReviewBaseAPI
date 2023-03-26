@@ -1,12 +1,12 @@
 import re
 
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework.serializers import (CharField, CurrentUserDefault,
                                         EmailField, ModelSerializer,
                                         Serializer,
                                         SerializerMethodField,
-                                        SlugRelatedField, ValidationError)
+                                        SlugRelatedField, ValidationError,
+                                        IntegerField)
 
 from reviews.models import Category, Comment, Genre, Review, Title
 from user.models import User
@@ -86,23 +86,18 @@ class ReadTitleSerializer(ModelSerializer):
     """Сериализатор для модели Title при использовании метода GET."""
     genre = GenreSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
-    rating = SerializerMethodField()
+    rating = IntegerField()
 
     class Meta:
         model = Title
         fields = ('id', 'name', 'year', 'rating', 'description',
                   'genre', 'category')
 
-    def get_rating(self, obj):
-        ob = get_object_or_404(Title, pk=obj.id)
-        rating = ob.reviews.aggregate(Avg("score"))
-        return rating['score__avg']
-
 
 class ReviewSerializer(ModelSerializer):
     author = SlugRelatedField(slug_field='username', read_only=True,
                               default=CurrentUserDefault())
-    title = SlugRelatedField(slug_field='name', read_only=True)
+
 
     def validate(self, data):
         if self.context.get('request').method == 'POST':
@@ -115,8 +110,9 @@ class ReviewSerializer(ModelSerializer):
         return data
 
     class Meta:
+
         model = Review
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
 
 
 class CommentSerializer(ModelSerializer):
