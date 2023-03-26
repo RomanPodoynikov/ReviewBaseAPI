@@ -30,9 +30,5 @@ class User(UsernameValeidationMixin, AbstractUser):
     def is_moderator(self):
         return self.role == MODERATOR
 
-    # @property
-    # def is_user(self):
-    #     return self.role == "user"
-
     def __str__(self):
         return str(self.username)

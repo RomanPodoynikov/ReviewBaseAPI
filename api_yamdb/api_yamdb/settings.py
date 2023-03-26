@@ -120,11 +120,7 @@ SIMPLE_JWT = {
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-#  подключаем движок filebased.EmailBackend
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-# указываем директорию, в которую будут складываться файлы писем
-# BASE_DIR = Path(__file__).resolve().parent.parent
-# EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
 EMAIL_FILE_PATH = ((BASE_DIR / 'sent_emails/'))
 DEFAULT_FROM_EMAIL = 'from@example.com'
 
