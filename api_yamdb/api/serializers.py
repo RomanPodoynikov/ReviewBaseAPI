@@ -1,38 +1,40 @@
-import re
-
-from django.db.models import Avg
-from django.shortcuts import get_object_or_404
+from django.conf import settings
 from rest_framework.serializers import (CharField, CurrentUserDefault,
-                                        EmailField, ModelSerializer,
-                                        Serializer,
-                                        SerializerMethodField,
+                                        EmailField, IntegerField,
+                                        ModelSerializer, Serializer,
                                         SlugRelatedField, ValidationError)
 
+from api.utils import UsernameValeidationMixin
 from reviews.models import Category, Comment, Genre, Review, Title
 from user.models import User
 
 
-class CreateUserSerializer(Serializer):
+class CreateUserSerializer(UsernameValeidationMixin, Serializer):
     """Сериализатор данных для создания пользователя."""
-    email = EmailField(max_length=254, required=True)
-    username = CharField(max_length=150, required=True)
-
-    def validate(self, data):
-        if data['username'] == 'me':
-            raise ValidationError('Нельзя использовать логин me')
-        elif not re.match(r'^[\w.@+-]+\Z', data['username']):
-            raise ValidationError('Использованы недопустимые символы.')
-        return data
+    email = EmailField(max_length=settings.MAX_LENGTH_EMAIL, required=True)
+    username = CharField(
+        max_length=settings.MAX_LENGTH_USERNAME,
+        required=True,
+    )
 
     class Meta:
         fields = ('username', 'email')
 
 
-class GetTokenSerializer(ModelSerializer):
+class GetTokenSerializer(UsernameValeidationMixin, Serializer):
     """Сериализатор данных для создания токена."""
+    username = CharField(
+        max_length=settings.MAX_LENGTH_USERNAME,
+        required=True,
+    )
+    confirmation_code = CharField(
+        max_length=150,
+        required=True,
+    )
+
     class Meta:
         model = User
-        fields = ['username', 'confirmation_code', ]
+        fields = ['username', 'confirmation_code']
 
 
 class UsersSerializer(ModelSerializer):
@@ -40,17 +42,20 @@ class UsersSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio',
-                  'role')
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role',
+        )
 
 
-class ChangeMeForAuthUserSerializer(ModelSerializer):
+class MeSerializer(UsersSerializer):
     """Сериализатор для модели User при обращении auth user."""
-    class Meta:
-        model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio',
-                  'role')
-        read_only_fields = ['role', ]
+    class Meta(UsersSerializer.Meta):
+        read_only_fields = ('role',)
 
 
 class GenreSerializer(ModelSerializer):
@@ -67,15 +72,20 @@ class CategorySerializer(ModelSerializer):
         model = Category
 
 
-class TitleSerializer(ModelSerializer):
+class PostPatchDeleteTitleSerializer(ModelSerializer):
     """
     Сериализатор для модели Title при использовании методов POST, PATCH,
     DELETE.
     """
-    genre = SlugRelatedField(queryset=Genre.objects.all(),
-                             slug_field='slug', many=True)
-    category = SlugRelatedField(queryset=Category.objects.all(),
-                                slug_field='slug')
+    genre = SlugRelatedField(
+        queryset=Genre.objects.all(),
+        slug_field='slug',
+        many=True,
+    )
+    category = SlugRelatedField(
+        queryset=Category.objects.all(),
+        slug_field='slug',
+    )
 
     class Meta:
         model = Title
@@ -86,23 +96,27 @@ class ReadTitleSerializer(ModelSerializer):
     """Сериализатор для модели Title при использовании метода GET."""
     genre = GenreSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
-    rating = SerializerMethodField()
+    rating = IntegerField()
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'rating', 'description',
-                  'genre', 'category')
-
-    def get_rating(self, obj):
-        ob = get_object_or_404(Title, pk=obj.id)
-        rating = ob.reviews.aggregate(Avg("score"))
-        return rating['score__avg']
+        fields = (
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'genre',
+            'category',
+        )
 
 
 class ReviewSerializer(ModelSerializer):
-    author = SlugRelatedField(slug_field='username', read_only=True,
-                              default=CurrentUserDefault())
-    title = SlugRelatedField(slug_field='name', read_only=True)
+    author = SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        default=CurrentUserDefault(),
+    )
 
     def validate(self, data):
         if self.context.get('request').method == 'POST':
@@ -116,13 +130,15 @@ class ReviewSerializer(ModelSerializer):
 
     class Meta:
         model = Review
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
 
 
 class CommentSerializer(ModelSerializer):
     author = SlugRelatedField(
-        slug_field='username', read_only=True,
-        default=CurrentUserDefault())
+        slug_field='username',
+        read_only=True,
+        default=CurrentUserDefault(),
+    )
 
     class Meta:
         model = Comment
