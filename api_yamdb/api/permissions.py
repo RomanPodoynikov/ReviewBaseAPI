@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class IsAdmin(BasePermission):
@@ -21,18 +21,4 @@ class IsOwnerOrModeratorOrReadOnly(BasePermission):
             request.user == obj.author
             or request.user.is_moderator
             or request.user.is_admin
-        )
-
-
-class Admin_Only(BasePermission):
-    def has_permission(self, request, view):
-        return (
-            request.user.is_admin
-            or request.user.is_staff
-        )
-
-    def has_object_permission(self, request, view, obj):
-        return (
-            request.user.is_admin
-            or request.user.is_staff
         )
