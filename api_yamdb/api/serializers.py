@@ -1,36 +1,33 @@
-import re
-
 from django.conf import settings
 from rest_framework.serializers import (CharField, CurrentUserDefault,
+                                        EmailField, ModelSerializer,
+                                        Serializer, SerializerMethodField,
                                         EmailField, IntegerField,
                                         ModelSerializer, Serializer,
                                         SlugRelatedField, ValidationError)
-
 from reviews.models import Category, Comment, Genre, Review, Title
 from user.models import User
 
+from api.mixins import UsernameValeidationMixin
 
-class CreateUserSerializer(Serializer):
+
+class CreateUserSerializer(UsernameValeidationMixin, Serializer):
     """Сериализатор данных для создания пользователя."""
-    email = EmailField(max_length=settings.MAX_LENGTH_EMAIL, required=True)
-    username = CharField(
-        max_length=settings.MAX_LENGTH_USERNAME,
-        required=True,
-    )
-
-    def validate(self, data):
-        if data['username'] == 'me':
-            raise ValidationError('Нельзя использовать логин me')
-        elif not re.match(r'^[\w.@+-]+\Z', data['username']):
-            raise ValidationError('Использованы недопустимые символы.')
-        return data
+    email = EmailField(max_length=254, required=True)
+    username = CharField(max_length=150, required=True)
 
     class Meta:
         fields = ('username', 'email')
 
 
-class GetTokenSerializer(ModelSerializer):
+class GetTokenSerializer(UsernameValeidationMixin, Serializer):
     """Сериализатор данных для создания токена."""
+    username = CharField(max_length=150, required=True)
+    confirmation_code = CharField(
+        max_length=150,
+        required=True
+    )
+
     class Meta:
         model = User
         fields = ['username', 'confirmation_code']
@@ -51,19 +48,11 @@ class UsersSerializer(ModelSerializer):
         )
 
 
-class ChangeMeForAuthUserSerializer(ModelSerializer):
+class MeSerializer(UsersSerializer):
     """Сериализатор для модели User при обращении auth user."""
-    class Meta:
-        model = User
-        fields = (
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'bio',
-            'role',
-        )
-        read_only_fields = ['role']
+
+    class Meta(UsersSerializer.Meta):
+        read_only_fields = ('role',)
 
 
 class GenreSerializer(ModelSerializer):

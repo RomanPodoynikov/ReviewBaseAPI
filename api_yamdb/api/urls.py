@@ -26,9 +26,21 @@ v1_router.register(
 
 v1_router.register('users', UsersViewSet, basename='users')
 
+auth_urls = [
+    path(
+        'signup/',
+        CreateUserView.as_view(),
+        name='signup'
+    ),
+    path(
+        'token/',
+        CreateTokenView.as_view(),
+        name='token'
+    )
+]
+
 
 urlpatterns = [
     path('v1/', include(v1_router.urls), name='api-root'),
-    path('v1/auth/signup/', CreateUserView.as_view(), name='signup'),
-    path('v1/auth/token/', CreateTokenView.as_view(), name='token'),
+    path('v1/auth/', include(auth_urls), name='api-authorization'),
 ]

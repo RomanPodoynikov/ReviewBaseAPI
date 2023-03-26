@@ -40,7 +40,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'api_yamdb.urls'
 
-TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
+TEMPLATES_DIR = BASE_DIR / 'templates'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -124,7 +124,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #  подключаем движок filebased.EmailBackend
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 # указываем директорию, в которую будут складываться файлы писем
-EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
+# BASE_DIR = Path(__file__).resolve().parent.parent
+# EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
+EMAIL_FILE_PATH = ((BASE_DIR / 'sent_emails/'))
 DEFAULT_FROM_EMAIL = 'from@example.com'
 
 MAX_LENGTH_NAME = 256
