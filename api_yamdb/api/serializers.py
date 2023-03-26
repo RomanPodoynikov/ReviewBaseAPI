@@ -1,12 +1,10 @@
 import re
 
 from django.conf import settings
-from django.shortcuts import get_object_or_404
 from rest_framework.serializers import (CharField, CurrentUserDefault,
-                                        EmailField, ModelSerializer,
-                                        Serializer, SerializerMethodField,
-                                        SlugRelatedField, ValidationError,
-                                        IntegerField)
+                                        EmailField, IntegerField,
+                                        ModelSerializer, Serializer,
+                                        SlugRelatedField, ValidationError)
 
 from reviews.models import Category, Comment, Genre, Review, Title
 from user.models import User
@@ -110,14 +108,23 @@ class ReadTitleSerializer(ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'rating', 'description',
-                  'genre', 'category')
+        fields = (
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'genre',
+            'category',
+        )
 
 
 class ReviewSerializer(ModelSerializer):
-    author = SlugRelatedField(slug_field='username', read_only=True,
-                              default=CurrentUserDefault())
-
+    author = SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        default=CurrentUserDefault(),
+    )
 
     def validate(self, data):
         if self.context.get('request').method == 'POST':
@@ -130,15 +137,16 @@ class ReviewSerializer(ModelSerializer):
         return data
 
     class Meta:
-
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
 
 
 class CommentSerializer(ModelSerializer):
     author = SlugRelatedField(
-        slug_field='username', read_only=True,
-        default=CurrentUserDefault())
+        slug_field='username',
+        read_only=True,
+        default=CurrentUserDefault(),
+    )
 
     class Meta:
         model = Comment

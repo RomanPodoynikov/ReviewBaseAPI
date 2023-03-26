@@ -109,7 +109,7 @@ class Review(Model):
     )
     score = IntegerField('Оценка', validators=[
         MinValueValidator(1, message="Минимальное значение поля: 1."),
-        MaxValueValidator(10, message="Максимальное значение поля: 10.")
+        MaxValueValidator(10, message="Максимальное значение поля: 10."),
     ])
     pub_date = DateTimeField('Дата публикации', auto_now_add=True)
 

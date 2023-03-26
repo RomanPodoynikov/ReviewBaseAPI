@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db import IntegrityError
+from django.db.models import Avg, F
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
@@ -13,7 +14,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import AccessToken
-from django.db.models import Avg, F
+
 from api.filters import TitleFilter
 from api.permissions import (Admin_Only, IsOwnerOrPrivilegeduserOrReadOnly,
                              TitlePermission)
