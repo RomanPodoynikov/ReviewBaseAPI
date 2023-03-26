@@ -1,11 +1,11 @@
 import re
 
+from django.conf import settings
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework.serializers import (CharField, CurrentUserDefault,
                                         EmailField, ModelSerializer,
-                                        Serializer,
-                                        SerializerMethodField,
+                                        Serializer, SerializerMethodField,
                                         SlugRelatedField, ValidationError)
 
 from reviews.models import Category, Comment, Genre, Review, Title
@@ -14,8 +14,11 @@ from user.models import User
 
 class CreateUserSerializer(Serializer):
     """Сериализатор данных для создания пользователя."""
-    email = EmailField(max_length=254, required=True)
-    username = CharField(max_length=150, required=True)
+    email = EmailField(max_length=settings.MAX_LENGTH_EMAIL, required=True)
+    username = CharField(
+        max_length=settings.MAX_LENGTH_USERNAME,
+        required=True,
+    )
 
     def validate(self, data):
         if data['username'] == 'me':
@@ -32,7 +35,7 @@ class GetTokenSerializer(ModelSerializer):
     """Сериализатор данных для создания токена."""
     class Meta:
         model = User
-        fields = ['username', 'confirmation_code', ]
+        fields = ['username', 'confirmation_code']
 
 
 class UsersSerializer(ModelSerializer):
@@ -40,17 +43,29 @@ class UsersSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio',
-                  'role')
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role',
+        )
 
 
 class ChangeMeForAuthUserSerializer(ModelSerializer):
     """Сериализатор для модели User при обращении auth user."""
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio',
-                  'role')
-        read_only_fields = ['role', ]
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role',
+        )
+        read_only_fields = ['role']
 
 
 class GenreSerializer(ModelSerializer):
@@ -67,15 +82,20 @@ class CategorySerializer(ModelSerializer):
         model = Category
 
 
-class TitleSerializer(ModelSerializer):
+class PostPatchDeleteTitleSerializer(ModelSerializer):
     """
     Сериализатор для модели Title при использовании методов POST, PATCH,
     DELETE.
     """
-    genre = SlugRelatedField(queryset=Genre.objects.all(),
-                             slug_field='slug', many=True)
-    category = SlugRelatedField(queryset=Category.objects.all(),
-                                slug_field='slug')
+    genre = SlugRelatedField(
+        queryset=Genre.objects.all(),
+        slug_field='slug',
+        many=True,
+    )
+    category = SlugRelatedField(
+        queryset=Category.objects.all(),
+        slug_field='slug',
+    )
 
     class Meta:
         model = Title
@@ -90,8 +110,15 @@ class ReadTitleSerializer(ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'rating', 'description',
-                  'genre', 'category')
+        fields = (
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'genre',
+            'category',
+        )
 
     def get_rating(self, obj):
         ob = get_object_or_404(Title, pk=obj.id)
@@ -100,8 +127,11 @@ class ReadTitleSerializer(ModelSerializer):
 
 
 class ReviewSerializer(ModelSerializer):
-    author = SlugRelatedField(slug_field='username', read_only=True,
-                              default=CurrentUserDefault())
+    author = SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        default=CurrentUserDefault(),
+    )
     title = SlugRelatedField(slug_field='name', read_only=True)
 
     def validate(self, data):
