@@ -55,7 +55,7 @@ class CreateUserView(APIView):
             subject='Код подтверждения регистрации',
             message='Используйте для получения токена\n'
                     f'confirmation_code:'
-                    '{default_token_generator.make_token(user)}\n'
+                    f'{default_token_generator.make_token(user)}\n'
                     f'username: {username}\n',
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
