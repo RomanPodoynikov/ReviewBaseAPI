@@ -129,16 +129,14 @@ class UsersViewSet(ModelViewSet):
 
 
 class TitleViewSet(ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(
+        rating=Avg(F("reviews__score"))).order_by("name")
     serializer_class = PostPatchDeleteTitleSerializer
     permission_classes = (TitlePermission,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     pagination_class = PageNumberPagination
     filterset_fields = ('name', 'year', 'category', 'genre',)
-
-    def get_queryset(self):
-        return Title.objects.annotate(rating=Avg(F("reviews__score")))
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -194,26 +192,16 @@ class CommentViewSet(ModelViewSet):
 
     def get_review(self):
         """Метод для получения ревью."""
-        return self.kwargs.get('reviews_id')
-
-    def get_title(self):
-        """Метод для получения произведения."""
-        return self.kwargs.get('title_id')
+        return get_object_or_404(
+            Review,
+            id=self.kwargs.get('reviews_id'),
+            title=self.kwargs.get('title_id'),
+        )
 
     def get_queryset(self):
         """Метод для определения queryset (комментарии только 1 отзыва.)"""
-        comments_queryset = get_object_or_404(
-            Review,
-            id=self.get_review(),
-            title=self.get_title(),
-        ).comments
-        return comments_queryset.all()
+        return self.get_review().comments.all()
 
     def perform_create(self, serializer):
         """Метод для добавления доп.инфо при создании нового комментария."""
-        review = get_object_or_404(
-            Review,
-            id=self.get_review(),
-            title=self.get_title(),
-        )
-        serializer.save(author=self.request.user, review=review)
+        serializer.save(author=self.request.user, review=self.get_review())

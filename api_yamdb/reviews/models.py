@@ -116,6 +116,7 @@ class Review(Model):
     class Meta:
         verbose_name = ('Отзыв')
         verbose_name_plural = ('Отзывы')
+        ordering = ('pub_date', )
         constraints = (
             UniqueConstraint(
                 fields=['author', 'title'],
@@ -151,6 +152,7 @@ class Comment(Model):
     class Meta:
         verbose_name = ('Комментарий к отзыву')
         verbose_name_plural = ('Комментарии к отзывам')
+        ordering = ('pub_date', )
 
     def __str__(self):
         """Метод строкового представления объекта."""
