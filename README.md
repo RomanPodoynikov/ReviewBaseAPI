@@ -40,37 +40,10 @@ cd api_yamdb/
 
 python manage.py migrate
 ```
-5. Импорт csv-файлов в базу данных:
-    * Запускаем терминал Command Prompt и вводим команды:
-
-        ```
-        cd api_yamdb
-
-        sqlite3.exe db.sqlite3
-        ```
-    * Далее вводим команды:
-
-        ```
-        .mode csv
-
-        .import static/data/category.csv reviews_category
-        ```
-    * Повторяем последнюю команду для импорта каждого файла:
-
-        ```
-        .import static/data/comments.csv reviews_comment
-
-        .import static/data/genre_title.csv reviews_genretitle
-
-        .import static/data/genre.csv reviews_genre
-
-        .import static/data/review.csv reviews_review
-
-        .import static/data/titles.csv reviews_title
-
-        .import static/data/users.csv user_user
-        ```
-
+5. Импортировать csv-файлы в базу данных:
+```
+python manage.py import_csv
+```
 6. Запустить проект:
 
 ```

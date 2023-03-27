@@ -17,9 +17,6 @@ class CreateUserSerializer(UsernameValeidationMixin, Serializer):
         required=True,
     )
 
-    class Meta:
-        fields = ('username', 'email')
-
 
 class GetTokenSerializer(UsernameValeidationMixin, Serializer):
     """Сериализатор данных для создания токена."""
@@ -32,12 +29,8 @@ class GetTokenSerializer(UsernameValeidationMixin, Serializer):
         required=True,
     )
 
-    class Meta:
-        model = User
-        fields = ['username', 'confirmation_code']
 
-
-class UsersSerializer(ModelSerializer):
+class UsersSerializer(UsernameValeidationMixin, ModelSerializer):
     """Сериализатор для модели User при обращении admin."""
 
     class Meta:
@@ -72,7 +65,7 @@ class CategorySerializer(ModelSerializer):
         model = Category
 
 
-class PostPatchDeleteTitleSerializer(ModelSerializer):
+class ModificationTitleSerializer(ModelSerializer):
     """
     Сериализатор для модели Title при использовании методов POST, PATCH,
     DELETE.
@@ -96,19 +89,11 @@ class ReadTitleSerializer(ModelSerializer):
     """Сериализатор для модели Title при использовании метода GET."""
     genre = GenreSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
-    rating = IntegerField()
+    rating = IntegerField(read_only=True)
 
     class Meta:
         model = Title
-        fields = (
-            'id',
-            'name',
-            'year',
-            'rating',
-            'description',
-            'genre',
-            'category',
-        )
+        fields = '__all__'
 
 
 class ReviewSerializer(ModelSerializer):
