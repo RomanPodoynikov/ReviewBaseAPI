@@ -19,7 +19,7 @@ class Category(Model):
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ('name',)
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
@@ -38,7 +38,7 @@ class Genre(Model):
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ('name',)
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
@@ -70,7 +70,7 @@ class Title(Model):
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ('name',)
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
 

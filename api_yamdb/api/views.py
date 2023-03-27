@@ -6,7 +6,6 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import (HTTP_200_OK, HTTP_400_BAD_REQUEST,
@@ -16,15 +15,15 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import AccessToken
 
 from api.filters import TitleFilter
-from api.permissions import (IsAdmin, IsOwnerOrPrivilegeduserOrReadOnly,
-                             TitlePermission)
+from api.permissions import (IsAdmin,
+                             IsAuthenticatedAndAdminOrSuperuserOrReadOnly,
+                             IsOwnerOrPrivilegeduserOrReadOnly)
 from api.serializers import (CategorySerializer, CommentSerializer,
                              CreateUserSerializer, GenreSerializer,
                              GetTokenSerializer, MeSerializer,
-                             PostPatchDeleteTitleSerializer,
-                             ReadTitleSerializer, ReviewSerializer,
-                             UsersSerializer)
-from api.utils import PostGetDeleteViewSet
+                             ModificationTitleSerializer, ReadTitleSerializer,
+                             ReviewSerializer, UsersSerializer)
+from api.utils import GenreCategoryViewSet
 from reviews.models import Category, Genre, Review, Title
 from user.models import User
 
@@ -130,38 +129,29 @@ class UsersViewSet(ModelViewSet):
 
 class TitleViewSet(ModelViewSet):
     queryset = Title.objects.all()
-    serializer_class = PostPatchDeleteTitleSerializer
-    permission_classes = (TitlePermission,)
+    serializer_class = ModificationTitleSerializer
+    permission_classes = (IsAuthenticatedAndAdminOrSuperuserOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
-    pagination_class = PageNumberPagination
     filterset_fields = ('name', 'year', 'category', 'genre',)
 
     def get_queryset(self):
         return Title.objects.annotate(rating=Avg(F("reviews__score")))
 
     def get_serializer_class(self):
-        if self.action in ['create', 'update', 'partial_update']:
-            return PostPatchDeleteTitleSerializer
-        return ReadTitleSerializer
+        if self.action in ['list', 'retrieve']:
+            return ReadTitleSerializer
+        return ModificationTitleSerializer
 
 
-class GenreViewSet(PostGetDeleteViewSet):
+class GenreViewSet(GenreCategoryViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (TitlePermission,)
-    filter_backends = (SearchFilter,)
-    search_fields = ('name',)
-    lookup_field = 'slug'
 
 
-class CategoryViewSet(PostGetDeleteViewSet):
+class CategoryViewSet(GenreCategoryViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (TitlePermission,)
-    filter_backends = (SearchFilter,)
-    search_fields = ('name',)
-    lookup_field = 'slug'
 
 
 class ReviewViewSet(ModelViewSet):
