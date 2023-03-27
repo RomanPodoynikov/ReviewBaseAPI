@@ -54,7 +54,7 @@ class CreateUserView(APIView):
             subject='Код подтверждения регистрации',
             message='Используйте для получения токена\n'
                     f'confirmation_code:'
-                    '{default_token_generator.make_token(user)}\n'
+                    f'{default_token_generator.make_token(user)}\n'
                     f'username: {username}\n',
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
@@ -128,15 +128,13 @@ class UsersViewSet(ModelViewSet):
 
 
 class TitleViewSet(ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(
+        rating=Avg(F("reviews__score"))).order_by("name")
     serializer_class = ModificationTitleSerializer
     permission_classes = (IsAuthenticatedAndAdminOrSuperuserOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     filterset_fields = ('name', 'year', 'category', 'genre',)
-
-    def get_queryset(self):
-        return Title.objects.annotate(rating=Avg(F("reviews__score")))
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
@@ -184,26 +182,16 @@ class CommentViewSet(ModelViewSet):
 
     def get_review(self):
         """Метод для получения ревью."""
-        return self.kwargs.get('reviews_id')
-
-    def get_title(self):
-        """Метод для получения произведения."""
-        return self.kwargs.get('title_id')
+        return get_object_or_404(
+            Review,
+            id=self.kwargs.get('reviews_id'),
+            title=self.kwargs.get('title_id'),
+        )
 
     def get_queryset(self):
         """Метод для определения queryset (комментарии только 1 отзыва.)"""
-        comments_queryset = get_object_or_404(
-            Review,
-            id=self.get_review(),
-            title=self.get_title(),
-        ).comments
-        return comments_queryset.all()
+        return self.get_review().comments.all()
 
     def perform_create(self, serializer):
         """Метод для добавления доп.инфо при создании нового комментария."""
-        review = get_object_or_404(
-            Review,
-            id=self.get_review(),
-            title=self.get_title(),
-        )
-        serializer.save(author=self.request.user, review=review)
+        serializer.save(author=self.request.user, review=self.get_review())
