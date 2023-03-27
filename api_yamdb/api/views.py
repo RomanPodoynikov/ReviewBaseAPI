@@ -8,8 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import (HTTP_200_OK, HTTP_400_BAD_REQUEST,
-                                   HTTP_404_NOT_FOUND)
+from rest_framework.status import (HTTP_200_OK, HTTP_400_BAD_REQUEST)
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import AccessToken
@@ -37,19 +36,18 @@ class CreateUserView(APIView):
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
         username = serializer.validated_data['username']
-        if User.objects.filter(username=username) or User.objects.filter(
-            email=email
+        if User.objects.filter(username=username).first() != (
+            User.objects.filter(email=email).first()
         ):
             if not User.objects.filter(username=username, email=email):
                 return Response(
                     'Login или Email уже занят',
                     status=HTTP_400_BAD_REQUEST,
                 )
-        user, create = User.objects.get_or_create(
+        user, _ = User.objects.get_or_create(
             username=username,
             email=email,
         )
-        user.save()
         send_mail(
             subject='Код подтверждения регистрации',
             message='Используйте для получения токена\n'
@@ -76,32 +74,26 @@ class CreateTokenView(APIView):
         """
         serializer = GetTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        if User.objects.filter(username=request.data['username']):
-            if serializer.is_valid():
-                username = serializer.validated_data.get('username')
-                confirmation_code = serializer.validated_data.get(
-                    'confirmation_code',
-                )
-                user = User.objects.get(username=username)
-                if not default_token_generator.check_token(
-                    user,
-                    confirmation_code,
-                ):
-                    message = (
-                        'Отсутствует обязательное поле или оно некорректно',
-                    )
-                    return Response(message, status=HTTP_400_BAD_REQUEST)
-                user.save()
-                message = {'token': str(AccessToken.for_user(user))}
-                return Response(message, status=HTTP_200_OK)
-        message = 'Пользователь не найден'
-        return Response(message, status=HTTP_404_NOT_FOUND)
+        user = get_object_or_404(User, username=request.data['username'])
+        confirmation_code = serializer.validated_data.get(
+            'confirmation_code',
+        )
+        if not default_token_generator.check_token(
+            user,
+            confirmation_code,
+        ):
+            message = (
+                'Отсутствует обязательное поле или оно некорректно',
+            )
+            return Response(message, status=HTTP_400_BAD_REQUEST)
+        message = {'token': str(AccessToken.for_user(user))}
+        return Response(message, status=HTTP_200_OK)
 
 
 class UsersViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UsersSerializer
-    permission_classes = (IsAuthenticated, IsAdmin,)
+    permission_classes = (IsAdmin,)
     lookup_field = 'username'
     filter_backends = (DjangoFilterBackend, SearchFilter)
     search_fields = ('username', )
