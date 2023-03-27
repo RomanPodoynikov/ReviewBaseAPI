@@ -17,8 +17,6 @@ class User(UsernameValeidationMixin, AbstractUser):
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_LIST, default=USER)
     bio = models.TextField(blank=True)
-    confirmation_code = models.CharField(max_length=255, null=True,
-                                         blank=False, default='aaaa')
     REQUIRED_FIELDS = ['email']
     USERNAME_FIELDS = 'email'
 
