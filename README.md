@@ -36,18 +36,15 @@ pip install -r requirements.txt
 ```
 4. Выполнить миграции:
 ```
-cd api_yamdb/
-
-python manage.py migrate
+python api_yamdb/manage.py migrate
 ```
 5. Импортировать csv-файлы в базу данных:
 ```
-python manage.py import_csv
+python api_yamdb/manage.py import_csv
 ```
 6. Запустить проект:
-
 ```
-python manage.py runserver
+python api_yamdb/manage.py runserver
 ```
 
 ## Примеры запросов:

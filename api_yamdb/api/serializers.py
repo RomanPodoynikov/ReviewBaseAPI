@@ -45,7 +45,7 @@ class UsersSerializer(UsernameValeidationMixin, ModelSerializer):
         )
 
 
-class MeSerializer(UsersSerializer):
+class MeSerializer(UsersSerializer, UsernameValeidationMixin):
     """Сериализатор для модели User при обращении auth user."""
     class Meta(UsersSerializer.Meta):
         read_only_fields = ('role',)

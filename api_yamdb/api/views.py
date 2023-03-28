@@ -8,14 +8,13 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import (HTTP_200_OK, HTTP_400_BAD_REQUEST)
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import AccessToken
 
 from api.filters import TitleFilter
-from api.permissions import (IsAdmin,
-                             IsAuthenticatedAndAdminOrSuperuserOrReadOnly,
+from api.permissions import (IsAdmin, IsAuthenticatedAndAdminOrReadOnly,
                              IsOwnerOrPrivilegeduserOrReadOnly)
 from api.serializers import (CategorySerializer, CommentSerializer,
                              CreateUserSerializer, GenreSerializer,
@@ -39,11 +38,10 @@ class CreateUserView(APIView):
         if User.objects.filter(username=username).first() != (
             User.objects.filter(email=email).first()
         ):
-            if not User.objects.filter(username=username, email=email):
-                return Response(
-                    'Login или Email уже занят',
-                    status=HTTP_400_BAD_REQUEST,
-                )
+            return Response(
+                'Login или Email уже занят',
+                status=HTTP_400_BAD_REQUEST,
+            )
         user, _ = User.objects.get_or_create(
             username=username,
             email=email,
@@ -96,7 +94,7 @@ class UsersViewSet(ModelViewSet):
     permission_classes = (IsAdmin,)
     lookup_field = 'username'
     filter_backends = (DjangoFilterBackend, SearchFilter)
-    search_fields = ('username', )
+    search_fields = ('username',)
     http_method_names = ('get', 'post', 'patch', 'delete',)
 
     @action(
@@ -123,13 +121,13 @@ class TitleViewSet(ModelViewSet):
     queryset = Title.objects.annotate(
         rating=Avg(F("reviews__score"))).order_by("name")
     serializer_class = ModificationTitleSerializer
-    permission_classes = (IsAuthenticatedAndAdminOrSuperuserOrReadOnly,)
+    permission_classes = (IsAuthenticatedAndAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     filterset_fields = ('name', 'year', 'category', 'genre',)
 
     def get_serializer_class(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ('list', 'retrieve'):
             return ReadTitleSerializer
         return ModificationTitleSerializer
 
