@@ -25,7 +25,7 @@ class IsOwnerOrPrivilegeduserOrReadOnly(BasePermission):
         )
 
 
-class IsAuthenticatedAndAdminOrSuperuserOrReadOnly(BasePermission):
+class IsAuthenticatedAndAdminOrReadOnly(BasePermission):
     """
     Права доступа для админа и суперюзера на редактирование, удаление и
     добавление.
@@ -36,6 +36,5 @@ class IsAuthenticatedAndAdminOrSuperuserOrReadOnly(BasePermission):
             or (
                 request.user.is_authenticated
                 and request.user.is_admin
-                or request.user.is_superuser
             )
         )

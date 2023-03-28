@@ -6,12 +6,12 @@ from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
 from rest_framework.serializers import ValidationError
 from rest_framework.viewsets import GenericViewSet
 
-from api.permissions import IsAuthenticatedAndAdminOrSuperuserOrReadOnly
+from api.permissions import IsAuthenticatedAndAdminOrReadOnly
 
 
 class GenreCategoryViewSet(CreateModelMixin, ListModelMixin, DestroyModelMixin,
                            GenericViewSet):
-    permission_classes = (IsAuthenticatedAndAdminOrSuperuserOrReadOnly,)
+    permission_classes = (IsAuthenticatedAndAdminOrReadOnly,)
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
