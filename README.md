@@ -84,7 +84,6 @@ python api_yamdb/manage.py runserver
     "pub_date": "2019-08-24T14:15:22Z"
 }
 ```
-
 ### 3. POST-запрос на получение JWT-токена:
 `http://127.0.0.1:8000/api/v1/auth/token/`
 ```
